@@ -1,0 +1,55 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/suannaiyi?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: llh221..
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 1024MB
+      max-request-size: 1024MB
+
+  # 解决springboot版本过高引起的swagger服务异常的问题
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**Mapper.xml
+#  configuration:
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+
+shiro-redis:
+  enabled: true
+  redis-manager:
+    host: 127.0.0.1:6379
+
+pyd:
+  jwt:
+    secret: f4e2e52034348f86b67cde581c0f9eb5
+    expire: 604800
+    header: token
+
+file:
+  upload:
+    allowTypes:
+      - text/plain
+      - application/msword
+      - application/pdf
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      - application/vnd.openxmlformats-officedocument.presentationml.presentation
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      - image/jpeg
+      - image/jpg
+      - image/png
+      - image/gif
+      - video/mp4
+      - video/flv
+      - audio/mpeg
+
