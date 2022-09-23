@@ -1,7 +1,10 @@
 package com.pyd.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.pyd.common.ParamDto;
 import com.pyd.common.Result;
+import com.pyd.entity.Doc;
+import com.pyd.mapper.DocMapper;
 import com.pyd.service.DocService;
 import com.pyd.service.FolderService;
 import com.pyd.service.UploadService;
@@ -17,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 
 import static com.pyd.service.impl.FolderServiceImpl.*;
 
@@ -33,6 +37,9 @@ public class UploadController {
 
     @Autowired
     FolderService folderService;
+
+    @Autowired
+    DocMapper docMapper;
 
     @ApiOperation(value = "上传文件")
     @PostMapping
@@ -108,7 +115,30 @@ public class UploadController {
     @ApiOperation(value = "退回文件")
     @PostMapping("/back")
     public Result backDocs(@RequestBody ParamDto paramDto) throws IOException{
-        return Result.succ(uploadService.backDocs(paramDto.getDocIds(), paramDto.getType()));
+        // 管理员权限
+        if (!ShiroUtil.getProfile().getRole().equals("admin")){
+            return Result.fail("您没有权限！");
+        }else {
+            HashSet<String> res = new HashSet<>();  // 返回结果
+            String type = paramDto.getType();
+            String[] id = paramDto.getDocIds().split(",");
+            QueryWrapper<Doc> docQueryWrapper = new QueryWrapper<>();
+            docQueryWrapper.in("id", id);
+            List<Doc> docList = docMapper.selectList(docQueryWrapper);
+            for (Doc doc : docList){
+                res.add(uploadService.backDocs(doc, type));
+            }
+            // 判断是否退回失败
+            if (res.contains("该文件不可退回！")){
+                if (docList.size() > 1){
+                    return Result.fail("部分文件不可退回");
+                }else {
+                    return Result.fail("该文件不可退回");
+                }
+            }else {
+                return Result.succ("退回成功");
+            }
+        }
     }
 
     @ApiOperation(value = "审核文件")

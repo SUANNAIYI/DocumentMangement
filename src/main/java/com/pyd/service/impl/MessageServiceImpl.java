@@ -42,7 +42,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
     @Override
     public List<Message> showMsg(Long userID) {
         QueryWrapper<Message> messageQueryWrapper = new QueryWrapper<>();
-        messageQueryWrapper.eq("userID", userID);
+        messageQueryWrapper.eq("userID", userID).orderByDesc("id");
         return messageMapper.selectList(messageQueryWrapper);
     }
 

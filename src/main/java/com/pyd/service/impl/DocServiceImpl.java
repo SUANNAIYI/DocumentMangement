@@ -159,31 +159,16 @@ public class DocServiceImpl extends ServiceImpl<DocMapper, Doc> implements DocSe
         if (record != null){
             recordMapper.deleteById(record.getId());
         }
-        Long receiveFolder = searchFolder("接收文件", ShiroUtil.getProfile().getId());
-        Long sendFolder = searchFolder("发送文件", ShiroUtil.getProfile().getId());
-        // 除发送接收的文件外删除本地文件
-        if (doc.getFolder() != receiveFolder && doc.getFolder() != sendFolder){
+        // 搜索本地文件地址
+        List<Doc> docList = docMapper.selectList(new QueryWrapper<Doc>().eq("path", doc.getPath()).select("path"));
+        // 没有文件使用此本地地址是则删除本地文件
+        if (docList.size() == 1){
             deleteFile(doc);
         }
-        // 当发送文件、接收文件仅存在一条此文件记录时删除记录则把本地文件删除
-        else {
-            QueryWrapper<Folder> folderQueryWrapper = new QueryWrapper<>();
-            // 查找收发文件夹中存在此文件个数
-            folderQueryWrapper.eq("foldername", "发送文件").or().eq("foldername", "接收文件").select("id");
-            List<Folder> folders = folderMapper.selectList(folderQueryWrapper);
-            List<Long> folderIDs = new ArrayList<>();
-            for (Folder folder : folders){
-                folderIDs.add(folder.getId());
-            }
-            QueryWrapper<Doc> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("docname", doc.getDocname()).and(docQueryWrapper -> docQueryWrapper.in("folder", folderIDs));
-            List<Doc> docList = docMapper.selectList(queryWrapper);
-            if (docList.size() == 1){
-                deleteFile(doc);
-            }
-        }
+        // 删除发布文件则删除所有流转信息
         if (doc.getFolder() == releaseFolder){
-            transferService.deleteTransferRec(id);  // 撤回发布
+            Long firstID = transferService.getFirstID(id);
+            transferMapper.delete(new QueryWrapper<Transfer>().eq("firstID", firstID));
         }
         docMapper.deleteById(id);
         return "删除成功";
@@ -306,8 +291,8 @@ public class DocServiceImpl extends ServiceImpl<DocMapper, Doc> implements DocSe
 
     // onlyoffice回调接口
     @Override
-    public HashMap<String, Integer> saveFile(HttpServletRequest request, HttpServletResponse response, String id, String userName, String st) throws IOException {
-        HashMap<String, Object> data = JSON.parseObject(st, HashMap.class);
+    public HashMap<String, Integer> saveFile(HttpServletRequest request, HttpServletResponse response, String id, String userName, String st){
+        HashMap data = JSON.parseObject(st, HashMap.class);
         String status = data.get("status").toString();
         Doc doc = docMapper.selectById(id);
         List<Doc> sendDocs = null;
@@ -404,7 +389,7 @@ public class DocServiceImpl extends ServiceImpl<DocMapper, Doc> implements DocSe
         Long rootId = getRootID(folderId);
         QueryWrapper<Doc> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("folder", folderId).orderByDesc("id");
-        IPage<Doc> docIPage = docMapper.selectPage(page, queryWrapper);
+        IPage docIPage = docMapper.selectPage(page, queryWrapper);
         List<Doc> docList = docIPage.getRecords();
         for (Doc doc : docList){
             setDocStatus(doc, rootId);  // 设置文件操作
@@ -425,7 +410,7 @@ public class DocServiceImpl extends ServiceImpl<DocMapper, Doc> implements DocSe
         QueryWrapper<Doc> queryWrapper = new QueryWrapper<>();
         queryWrapper.in("folder", folderIds)
                 .and(docQueryWrapper -> docQueryWrapper.like("docname", texts).or().like("content", texts)).orderByDesc("id");
-        IPage<Doc> docIPage = docMapper.selectPage(page, queryWrapper);
+        IPage docIPage = docMapper.selectPage(page, queryWrapper);
         List<Doc> docList = docIPage.getRecords();
         for (Doc doc : docList){
             setDocStatus(doc, getRootID(doc.getFolder()));  // 设置文件状态
@@ -461,7 +446,7 @@ public class DocServiceImpl extends ServiceImpl<DocMapper, Doc> implements DocSe
                 .and(StringUtils.hasText(sender), docQueryWrapper -> docQueryWrapper.eq("sender", sender))
                 .and(StringUtils.hasText(type), docQueryWrapper -> docQueryWrapper.eq("type", type))
                 .and(flag, docQueryWrapper -> docQueryWrapper.between("uploadtime", finalStart, finalEnd)).orderByDesc("id");
-        IPage<Doc> docIPage = docMapper.selectPage(page, queryWrapper);
+        IPage docIPage = docMapper.selectPage(page, queryWrapper);
         List<Doc> docList = docIPage.getRecords();
         for (Doc doc : docList){
             setDocStatus(doc, getRootID(doc.getFolder()));  // 设置文件操作

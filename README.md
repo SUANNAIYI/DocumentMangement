@@ -20,19 +20,15 @@
 目前支持编辑的文件类型有全套Office文件，需在本地部署OnlyOffice服务。
 
 ## 部署步骤
-OnlyOffice在线编辑：
 
-<<<<<<< HEAD
-OnlyOffice在线编辑：
+### OnlyOffice在线编辑：
 
-=======
->>>>>>> f4cd336627c81453419a548366e8c33b5d1d63e3
 下载地址：[Download ONLYOFFICE Docs](https://www.onlyoffice.com/download-docs.aspx?from=document-editor#docs-community)
 
 安装教程：[Installing ONLYOFFICE Docs for Windows on a local server - ONLYOFFICE](https://helpcenter.onlyoffice.com/installation/docs-community-install-windows.aspx)
 
 Api接口使用教程：[ONLYOFFICE Api Documentation](https://api.onlyoffice.com/editors)
 
-KKFileView文件预览：
+### KKFileView文件预览：
 
 Gitee代码仓：[kkFileView下载地址](https://gitee.com/kekingcn/file-online-preview)

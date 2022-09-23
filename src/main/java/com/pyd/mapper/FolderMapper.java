@@ -2,7 +2,6 @@ package com.pyd.mapper;
 
 import com.pyd.entity.Folder;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Component;
 
 

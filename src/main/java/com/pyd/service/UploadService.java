@@ -19,7 +19,7 @@ public interface UploadService {
     String releaseFiles(Long id) throws IOException;
     String reviewDoc(Long docID, Long userID);
     String shareDoc(Long id) throws IOException;
-    String backDocs(String ids, String type) throws IOException;
+    String backDocs(Doc doc, String type) throws IOException;
     String collectDoc(Long docID) throws IOException;
 
 }
