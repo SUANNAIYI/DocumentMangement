@@ -28,8 +28,9 @@ mvnw
 target
 *.mvn
 *.idea
-src/main/resources/static/2/
-src/main/resources/static/5/
+src/main/resources/static/2
+src/main/resources/static/5
+.gitignore
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
