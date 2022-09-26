@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLEncoder;
@@ -104,35 +105,65 @@ public class UploadServiceImpl implements UploadService {
         QueryWrapper<Doc> queryWrapper = new QueryWrapper<>();
         queryWrapper.in("id", ids);
         List<Doc> docList = docMapper.selectList(queryWrapper);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
-        try {
-            for (Doc doc : docList) {
-                zipOutputStream.putNextEntry(new ZipEntry(doc.getDocname()));
-                String filePath = doc.getPath();
-                File file = new File(basepath2 + "/" + filePath);
-                zipOutputStream.write(FileUtils.readFileToByteArray(file));
+        if (docList.size() == 1){
+                InputStream in;
+                ServletOutputStream outputStream;
+                try {
+                    Doc doc = docList.get(0);
+                    in = new FileInputStream(basepath2 + doc.getPath());
+                    String docname = doc.getDocname();
+                    String docName = URLEncoder.encode(docname,"UTF-8");
+                    response.setHeader("content-type","application/force-download");
+                    response.setHeader("Content-Disposition","attachment;filename=" + docName);
+                    outputStream = response.getOutputStream();
+                    byte[] buffer=new byte[10240];
+                    int len;
+                    while((len=in.read(buffer))!=-1){
+                        outputStream.write(buffer,0,len);
+                    }
+                    outputStream.flush();
+                    outputStream.close();
+                    in.close();
+                    return ResponseEntity.ok().body(buffer);
+                } catch (FileNotFoundException e) {
+                    System.out.println("文件未找到");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("原文件不存在".getBytes());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("下载失败".getBytes());
+                }
             }
-            zipOutputStream.closeEntry();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
+        else {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
             try {
-                zipOutputStream.close();
+                for (Doc doc : docList) {
+                    zipOutputStream.putNextEntry(new ZipEntry(doc.getDocname()));
+                    String filePath = doc.getPath();
+                    File file = new File(basepath2 + "/" + filePath);
+                    zipOutputStream.write(FileUtils.readFileToByteArray(file));
+                }
+                zipOutputStream.closeEntry();
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                try {
+                    zipOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        }
-        try {
-            String title = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            String zipFileName = title + ".zip";
-            zipFileName = URLEncoder.encode(zipFileName, "UTF-8");
-            response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
-            response.setHeader("Content-disposition", "attachment;filename=" + zipFileName);
-            response.flushBuffer();
-            return ResponseEntity.ok().body(byteArrayOutputStream.toByteArray());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("下载失败.".getBytes());
+            try {
+                String title = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"));
+                String zipFileName = title + ".zip";
+                zipFileName = URLEncoder.encode(zipFileName, "UTF-8");
+                response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+                response.setHeader("Content-disposition", "attachment;filename=" + zipFileName);
+                response.flushBuffer();
+                return ResponseEntity.ok().body(byteArrayOutputStream.toByteArray());
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("下载失败".getBytes());
+            }
         }
     }
 

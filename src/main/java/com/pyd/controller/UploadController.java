@@ -126,6 +126,9 @@ public class UploadController {
             docQueryWrapper.in("id", id);
             List<Doc> docList = docMapper.selectList(docQueryWrapper);
             for (Doc doc : docList){
+                if (doc.getStatus() != "已审核"){
+                    return Result.fail("部分文件未审核，请先审核！");
+                }
                 res.add(uploadService.backDocs(doc, type));
             }
             // 判断是否退回失败
