@@ -1,0 +1,16 @@
+toEdit (row) {
+      Server.post(process.env.VUE_APP_SERVER + '/docs/edit', { id: row.id }).then((json) => {
+        console.log(json.data)
+        this.poHtmlCode = json.data
+        var url = 'http://192.168.8.108:8080/' + json.data[0]
+        // const Base64 = require('js-base64').Base64
+        if (json.code === 200) {
+          window.open(
+            'http://192.168.8.108:8012/onlineEdit?url=' +
+                // encodeURIComponent(Base64.encode(url))
+                encodeURIComponent(url) + '&callBack=192.168.8.108:8080/' + json.data[1]
+          )
+          this.$store.commit('refresh')
+        }
+      })
+    },

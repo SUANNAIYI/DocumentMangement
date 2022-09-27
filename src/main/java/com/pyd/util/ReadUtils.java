@@ -41,7 +41,7 @@ public class ReadUtils {
         StringBuffer content = new StringBuffer();
         InputStream is = null;
         try {
-            is = new FileInputStream(new File(path));
+            is = new FileInputStream(path);
             // 2007版本的word
             XWPFDocument xwpf = new XWPFDocument(is);    // 2007版本，仅支持docx文件处理
             List<XWPFParagraph> paragraphs = xwpf.getParagraphs();
@@ -76,7 +76,7 @@ public class ReadUtils {
         StringBuffer content = new StringBuffer();
         InputStream is = null;
         try {
-            is = new FileInputStream(new File(path));
+            is = new FileInputStream(path);
             // 2003版本的word
             WordExtractor extractor = new WordExtractor(is);  // 2003版本 仅doc格式文件可处理，docx文件不可处理
             String[] paragraphText = extractor.getParagraphText();   // 获取段落，段落缩进无法获取，可以在前添加空格填充

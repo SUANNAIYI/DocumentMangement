@@ -40,7 +40,7 @@ public class TransferServiceImpl extends ServiceImpl<TransferMapper, Transfer> i
     public List<Transfer> showTransfer(Long nowID) {
         Long firstID = getFirstID(nowID);
         QueryWrapper<Transfer> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("firstID", firstID).orderByDesc("id");
+        queryWrapper.eq("firstID", firstID);
         List<Transfer> transferList = transferMapper.selectList(queryWrapper);
         for (Transfer transfer : transferList){
             transfer.setOperator(userMapper.selectById(transfer.getOperatorID()).getUsername());  // 设置操作者姓名

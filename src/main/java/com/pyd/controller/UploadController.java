@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
 import static com.pyd.service.impl.FolderServiceImpl.*;
 
@@ -126,18 +127,17 @@ public class UploadController {
             docQueryWrapper.in("id", id);
             List<Doc> docList = docMapper.selectList(docQueryWrapper);
             for (Doc doc : docList){
-                if (doc.getStatus() != "已审核"){
-                    return Result.fail("部分文件未审核，请先审核！");
-                }
                 res.add(uploadService.backDocs(doc, type));
             }
             // 判断是否退回失败
-            if (res.contains("该文件不可退回！")){
+            if (res.contains("该文件不可退回")){
                 if (docList.size() > 1){
                     return Result.fail("部分文件不可退回");
                 }else {
                     return Result.fail("该文件不可退回");
                 }
+            }else if (res.contains("请审核后再退回")) {
+                return Result.fail("文件请审核后退回");
             }else {
                 return Result.succ("退回成功");
             }

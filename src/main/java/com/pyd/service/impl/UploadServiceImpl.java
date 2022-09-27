@@ -296,45 +296,47 @@ public class UploadServiceImpl implements UploadService {
     @Override
     public String backDocs(Doc doc, String type){
         if (doc.getSender() == null){
-            return "该文件不可退回！";  // 接收文件才可退回
+            return "该文件不可退回";  // 接收文件才可退回
+        }else if (doc.getStatus() != "已审核") {
+            return "请审核后再退回";  // 审核后退回
         }else {
-            Long userID = userMapper.selectOne(new QueryWrapper<User>().eq("username",
-                    doc.getSender()).select("id")).getId();  // 接收者ID
-            Long receiveFolder = docService.searchFolder("接收文件", userID);  // 接收者接收文件夹
-            // 新增接收文件记录
-            Doc receiveDoc = docService.newDocRec(doc.getDocname(), doc.getType(), doc.getUploader(),
-                    LocalDateTime.now(), doc.getContent(), doc.getPath(), receiveFolder, ShiroUtil.getProfile().getUsername());
-            String content;  // WebSocket消息内容
-            if (type.equals("不通过")){
-                // 获取原文件ID
-                Long firstID = transferService.getFirstID(doc.getId());
-                // 增加文件流转记录
-                transferService.newTransferRec(firstID, receiveDoc.getId(), "审核未通过", ShiroUtil.getProfile().getId(), LocalDateTime.now());
-                recordService.recordStatus(receiveFolder, receiveDoc.getId(), userID, "审核未通过");  // 新增退回文件状态
-                content = ShiroUtil.getProfile().getUsername() + "给您退回了一份审核未通过文件";
-            }else {
-                // 获取原文件ID
-                Long firstID = transferService.getFirstID(doc.getId());
-                // 增加文件流转记录
-                transferService.newTransferRec(firstID, receiveDoc.getId(), "审核通过", ShiroUtil.getProfile().getId(), LocalDateTime.now());
-                recordService.recordStatus(receiveFolder, receiveDoc.getId(), userID, "审核通过");  // 新增待发布文件状态
-                content = ShiroUtil.getProfile().getUsername() + "给您发送了一份审核通过文件";
-            }
-            // WebSocket发送消息
-            Map<String, Object> message = new HashMap<>();
-            String title = doc.getDocname();
-            LocalDateTime date = LocalDateTime.now();
-            message.put("title", title);
-            message.put("content", content);
-            message.put("date", date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            message.put("readFlag", false);
-            websocketService.sendMessageById("projectId", doc.getSender(), JSON.toJSONString(message));
-            messageService.newMsgRec(userID, title, content, date, "false");  //记录消息
-            // 添加版本记录
-            versionService.newVersionRec(receiveDoc.getId(), receiveDoc.getDocname(), ShiroUtil.getProfile().getUsername(),
-                    LocalDateTime.now(), receiveDoc.getPath());
-            docService.deleteFileRec(doc.getId());
-            return "退回成功";
+                Long userID = userMapper.selectOne(new QueryWrapper<User>().eq("username",
+                        doc.getSender()).select("id")).getId();  // 接收者ID
+                Long receiveFolder = docService.searchFolder("接收文件", userID);  // 接收者接收文件夹
+                // 新增接收文件记录
+                Doc receiveDoc = docService.newDocRec(doc.getDocname(), doc.getType(), doc.getUploader(),
+                        LocalDateTime.now(), doc.getContent(), doc.getPath(), receiveFolder, ShiroUtil.getProfile().getUsername());
+                String content;  // WebSocket消息内容
+                if (type.equals("不通过")){
+                    // 获取原文件ID
+                    Long firstID = transferService.getFirstID(doc.getId());
+                    // 增加文件流转记录
+                    transferService.newTransferRec(firstID, receiveDoc.getId(), "审核未通过", ShiroUtil.getProfile().getId(), LocalDateTime.now());
+                    recordService.recordStatus(receiveFolder, receiveDoc.getId(), userID, "审核未通过");  // 新增退回文件状态
+                    content = ShiroUtil.getProfile().getUsername() + "给您退回了一份审核未通过文件";
+                }else {
+                    // 获取原文件ID
+                    Long firstID = transferService.getFirstID(doc.getId());
+                    // 增加文件流转记录
+                    transferService.newTransferRec(firstID, receiveDoc.getId(), "审核通过", ShiroUtil.getProfile().getId(), LocalDateTime.now());
+                    recordService.recordStatus(receiveFolder, receiveDoc.getId(), userID, "审核通过");  // 新增待发布文件状态
+                    content = ShiroUtil.getProfile().getUsername() + "给您发送了一份审核通过文件";
+                }
+                // WebSocket发送消息
+                Map<String, Object> message = new HashMap<>();
+                String title = doc.getDocname();
+                LocalDateTime date = LocalDateTime.now();
+                message.put("title", title);
+                message.put("content", content);
+                message.put("date", date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                message.put("readFlag", false);
+                websocketService.sendMessageById("projectId", doc.getSender(), JSON.toJSONString(message));
+                messageService.newMsgRec(userID, title, content, date, "false");  //记录消息
+                // 添加版本记录
+                versionService.newVersionRec(receiveDoc.getId(), receiveDoc.getDocname(), ShiroUtil.getProfile().getUsername(),
+                        LocalDateTime.now(), receiveDoc.getPath());
+                docService.deleteFileRec(doc.getId());
+                return "退回成功";
         }
     }
 

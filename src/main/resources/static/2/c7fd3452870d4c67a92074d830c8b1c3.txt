@@ -1,0 +1,33 @@
+<template>
+  <div>
+    <template v-for="menu in this.menuData">
+      <el-submenu :key="menu.id" :index="menu.id" v-if="menu.children" @contextmenu.native.prevent="handleContextmenu($event, menu.id)">
+        <template slot="title">
+        <el-icon name="folder-opened"></el-icon>
+        <span slot="title">{{menu.foldername}}</span>
+        </template>
+        <menu-tree :menuData="menu.children"></menu-tree>
+      </el-submenu>
+      <el-menu-item :key="menu.id + 'key'" :index="menu.id" v-else  @contextmenu.native.prevent="handleContextmenu($event, menu.id)">
+        <el-icon name="folder-opened"></el-icon>
+        <span slot="title">{{menu.foldername}}</span>
+      </el-menu-item>
+    </template>
+  </div>
+</template>
+
+<script>
+export default {
+  props: ['menuData'],
+  name: 'MenuTree',
+  methods: {
+    handleContextmenu (event, id) {
+      this.$emit('contextmenu', { event, id })
+    }
+  }
+}
+</script>
+
+<style scoped>
+
+</style>
